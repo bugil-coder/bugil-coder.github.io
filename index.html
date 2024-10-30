@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 숫자 게임</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #gameCanvas {
+            margin-top: 30px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #cards, #operators {
+            margin-top: 20px;
+        }
+
+        .card {
+            display: inline-block;
+            padding: 20px 30px;
+            margin: 10px;
+            font-size: 1.5em;
+            background-color: #ffffff;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background-color: #f7f7f7;
+        }
+
+        #equation {
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: #444;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .delete {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .delete:hover {
+            background-color: #e53935;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+<h1>랜덤 숫자 게임</h1>
+<canvas id="gameCanvas" width="600" height="200"></canvas>
+<br>
+<div id="cards"></div>
+<div id="operators">
+    <div class="card" data-op="+">+</div>
+    <div class="card" data-op="-">-</div>
+    <div class="card" data-op="*">*</div>
+    <div class="card" data-op="/">/</div>
+    <div class="card" data-op="%">%</div>
+    <div class="card" data-op="(">(</div>
+    <div class="card" data-op=")">)</div>
+</div>
+<button class="delete" onclick="deleteLast()">Delete</button>
+<p>식: <span id="equation"></span></p>
+<button onclick="resetGame()">리셋</button>
+<p id="result"></p>
+
+<script>
+let targetNumber = Math.floor(Math.random() * 100) + 1;
+let cardNumbers = [];
+let equation = '';
+let startTime;
+
+function startGame() {
+    startTime = new Date(); 
+    drawTargetNumber();
+    generateRandomNumbers();
+    document.getElementById('equation').textContent = '';
+    document.getElementById('result').textContent = '';
+}
+
+function drawTargetNumber() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);  
+    ctx.font = '48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(targetNumber, canvas.width / 2, canvas.height / 2);
+}
+
+function generateRandomNumbers() {
+    const cardsDiv = document.getElementById('cards');
+    cardsDiv.innerHTML = ''; 
+
+    for (let i = 0; i < 4; i++) {
+        const num = Math.floor(Math.random() * 100) + 1;
+        cardNumbers.push(num);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.textContent = num;
+        card.addEventListener('click', () => addToEquation(num));
+        cardsDiv.appendChild(card);
+    }
+}
+
+function addToEquation(value) {
+    equation += value;
+    document.getElementById('equation').textContent = equation;
+}
+
+document.querySelectorAll('[data-op]').forEach(opCard => {
+    opCard.addEventListener('click', function() {
+        const op = this.getAttribute('data-op');
+        equation += ` ${op} `;
+        document.getElementById('equation').textContent = equation;
+    });
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        checkResult();
+    }
+});
+
+function deleteLast() {
+    const parts = equation.trim().split(/(\d+|\s*[+*/%-]\s*|\s*[()]\s*)/).filter(Boolean); // 요소를 분리
+    if (parts.length > 0) {
+        parts.pop(); 
+        equation = parts.join(' ').trim(); 
+        document.getElementById('equation').textContent = equation;
+    }
+}
+
+function checkResult() {
+    try {
+        const result = eval(equation);
+        if (result === targetNumber) {
+            const timeTaken = (new Date() - startTime) / 1000;
+            document.getElementById('result').textContent = `성공! 소요 시간: ${timeTaken}초`;
+        } else {
+            document.getElementById('result').textContent = '틀렸습니다! 다시 시도하세요.';
+        }
+    } catch (error) {
+        document.getElementById('result').textContent = '잘못된 식입니다!';
+    }
+}
+
+function resetGame() {
+    targetNumber = Math.floor(Math.random() * 100) + 1;
+    cardNumbers = [];
+    equation = '';
+    startGame();
+}
+
+startGame();  
+</script>
+
+</body>
+</html>
